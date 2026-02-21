@@ -87,6 +87,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (showOnlyMy) {
             items = items.filter(it => it.userPhone === me);
         }
+        // distance filter
+        const distEnabled = document.getElementById('distance-filter-enabled');
+        if (distEnabled && distEnabled.checked) {
+            const maxKm = parseFloat(document.getElementById('distance-km').value);
+            const maxMeters = (isNaN(maxKm) ? 2 : maxKm) * 1000;
+            const home = await getHomeCoords();
+            if (home) {
+                items = items.filter(it => {
+                    if (!it.coords) return true; // no coords stored → don't hide
+                    return haversineMeters(home[0], home[1], it.coords[0], it.coords[1]) <= maxMeters;
+                });
+            }
+        }
         container.innerHTML = '';
         if (items.length === 0) {
             container.textContent = 'Пока нет объявлений.';
@@ -551,6 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 setCurrentUser(data.user);
+                homeCoords = null; // address may have changed
                 profileEdit.style.display = 'none';
                 profileView.style.display = '';
                 populateProfileView();
@@ -562,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.getElementById('logout-btn').addEventListener('click', () => {
+        homeCoords = null;
         localStorage.removeItem('currentUser');
         sessionStorage.removeItem('currentUser');
         authContainer.style.display = '';
@@ -639,24 +654,48 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    document.addEventListener('DOMContentLoaded', () => {
-        // hook geosuggest to both location inputs
-        const loc = document.getElementById('location-input');
-        if (loc) attachGeosuggest(loc);
-        const reg = document.getElementById('reg-address');
-        if (reg) attachGeosuggest(reg);
-        // password toggle listeners
-        document.querySelectorAll('.toggle-password').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const input = btn.previousElementSibling;
-                if (input && input.type === 'password') {
-                    input.type = 'text';
-                } else if (input) {
-                    input.type = 'password';
-                }
-            });
+    // hook geosuggest to item location input only (registration address is plain text)
+    const loc = document.getElementById('location-input');
+    if (loc) attachGeosuggest(loc);
+    // password toggle listeners
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = btn.previousElementSibling;
+            if (input && input.type === 'password') {
+                input.type = 'text';
+            } else if (input) {
+                input.type = 'password';
+            }
         });
     });
+
+    /* фильтр по расстоянию */
+    function haversineMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Earth radius in metres
+        const toRad = x => x * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+    let homeCoords = null;
+    async function getHomeCoords() {
+        if (homeCoords) return homeCoords;
+        const user = getCurrentUser();
+        if (!user || !user.address) return null;
+        const statusEl = document.getElementById('distance-status');
+        if (statusEl) statusEl.textContent = 'Определяем адрес…';
+        const results = await fetchGeo(user.address);
+        if (results && results.length > 0) {
+            homeCoords = results[0].coords;
+            if (statusEl) statusEl.textContent = '';
+        } else {
+            if (statusEl) statusEl.textContent = 'Адрес из профиля не найден';
+        }
+        return homeCoords;
+    }
+    document.getElementById('distance-filter-enabled').addEventListener('change', () => showMain());
+    document.getElementById('distance-km').addEventListener('change', () => showMain());
 
     /* startup */
     const rememberMsg = document.getElementById('remember-message');

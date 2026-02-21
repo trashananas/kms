@@ -118,6 +118,13 @@
                 <label><input type="checkbox" name="age-filter" value="16+"> 16+</label>
             </div>
         </fieldset>
+        <div id="distance-filter-row" style="margin-top:0.5rem;">
+            <label>
+                <input type="checkbox" id="distance-filter-enabled">
+                Не дальше <input type="number" id="distance-km" value="2" min="0.1" max="50" step="0.1" style="width:4em"> км от моего адреса
+            </label>
+            <span id="distance-status" style="margin-left:0.5rem;font-size:0.85em;color:var(--text);"></span>
+        </div>
         <div id="items-container"></div>
     </section>
     <!-- modal for viewing ad -->
@@ -194,8 +201,7 @@
                 <label>Телефон: <input type="text" name="phone" required></label><br>
                 <label>Пароль: <input type="password" name="password" required> <button type="button" class="toggle-password">👁</button></label><br>
                 <label>Подтверждение пароля: <input type="password" name="password2" required> <button type="button" class="toggle-password">👁</button></label><br>
-                <label>Адрес: <input type="text" name="address" id="reg-address" list="location-list" placeholder="Начните вводить адрес"></label><br>
-                <!-- geosuggest будет использовать тот же список, поэтому reg-map больше не нужен -->
+                <label>Адрес: <input type="text" name="address" id="reg-address" placeholder="Улица, дом"></label><br>
                 <fieldset>
                     <legend>Подъезд/корпус, этаж, кв/офис, коды</legend>
                     <label>Корпус/строение: <input type="text" name="building"></label><br>
