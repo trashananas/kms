@@ -13,8 +13,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname)); // serve all files in project as static
 
-// simple JSON storage
-const DB_FILE = path.join(__dirname, 'db.json');
+// simple JSON storage – use /tmp on Vercel (serverless), local file otherwise
+// NOTE: /tmp on Vercel is ephemeral and may be cleared between invocations.
+// For persistent storage in production, replace with a proper database service.
+const DB_FILE = process.env.VERCEL ? '/tmp/db.json' : path.join(__dirname, 'db.json');
 let db = { users: [], items: [] };
 
 function loadDB() {
@@ -150,6 +152,10 @@ app.delete('/api/users/:id', (req,res)=>{
     res.json({ok:true});
 });
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server listening on port ${PORT}`);
+    });
+}
+
+module.exports = app;
