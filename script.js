@@ -412,13 +412,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 setCurrentUser(data.user, remember);
-                await showMain();
+                authContainer.style.display = 'none';
             } else {
                 alert(data.error || 'Ошибка входа');
+                return;
             }
         } catch(err){
             alert('Ошибка сети');
+            return;
         }
+        await showMain();
     });
     loginFormDiv.querySelector('#show-register').addEventListener('click', (e) => {
         e.preventDefault();
@@ -455,13 +458,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 setCurrentUser(data.user);
-                await showMain();
+                authContainer.style.display = 'none';
             } else {
                 alert(data.error || 'Ошибка регистрации');
+                return;
             }
         } catch(err) {
             alert('Ошибка сети');
+            return;
         }
+        await showMain();
     });
     registerFormDiv.querySelector('#show-login').addEventListener('click', (e) => {
         e.preventDefault();

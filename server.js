@@ -30,6 +30,9 @@ function saveDB() {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 }
 loadDB();
+// ensure arrays always exist in case db.json is corrupted, partial, or manually edited
+db.users = db.users || [];
+db.items = db.items || [];
 
 // helpers
 function normalizePhone(p) {
@@ -49,7 +52,13 @@ app.post('/api/register', (req, res) => {
     }
     const user = { id: Date.now(), name, phone: norm, password, address, availability, addressDetails };
     db.users.push(user);
-    saveDB();
+    try {
+        saveDB();
+    } catch(e) {
+        db.users.pop();
+        console.error('saveDB failed', e);
+        return res.status(500).json({ error: 'Ошибка сохранения данных' });
+    }
     res.json({ user: { id: user.id, name: user.name, phone: user.phone } });
 });
 
