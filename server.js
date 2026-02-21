@@ -14,7 +14,10 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname)); // serve all files in project as static
 
 // simple JSON storage
-const DB_FILE = path.join(__dirname, 'db.json');
+// On Vercel the project directory is read-only; /tmp is the only writable location
+const DB_FILE = process.env.VERCEL
+    ? '/tmp/db.json'
+    : path.join(__dirname, 'db.json');
 let db = { users: [], items: [] };
 
 function loadDB() {
@@ -30,6 +33,9 @@ function saveDB() {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 }
 loadDB();
+// ensure arrays always exist in case db.json is corrupted, partial, or manually edited
+db.users = db.users || [];
+db.items = db.items || [];
 
 // helpers
 function normalizePhone(p) {
@@ -49,7 +55,13 @@ app.post('/api/register', (req, res) => {
     }
     const user = { id: Date.now(), name, phone: norm, password, address, availability, addressDetails };
     db.users.push(user);
-    saveDB();
+    try {
+        saveDB();
+    } catch(e) {
+        db.users.pop();
+        console.error('saveDB failed', e);
+        return res.status(500).json({ error: 'Ошибка сохранения данных' });
+    }
     res.json({ user: { id: user.id, name: user.name, phone: user.phone } });
 });
 
@@ -70,7 +82,7 @@ app.post('/api/items', (req, res) => {
     const item = req.body;
     item.id = Date.now();
     db.items.unshift(item);
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json(item);
 });
 
@@ -79,14 +91,14 @@ app.put('/api/items/:id', (req, res) => {
     const idx = db.items.findIndex(i=>i.id===id);
     if (idx===-1) return res.status(404).end();
     db.items[idx] = { ...db.items[idx], ...req.body };
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json(db.items[idx]);
 });
 
 app.delete('/api/items/:id', (req, res) => {
     const id = Number(req.params.id);
     db.items = db.items.filter(i=>i.id!==id);
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json({ ok:true });
 });
 
@@ -96,7 +108,7 @@ app.post('/api/book/:id', (req, res) => {
     const item = db.items.find(i=>i.id===id);
     if (!item) return res.status(404).end();
     item.bookedBy = normalizePhone(phone);
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json(item);
 });
 
@@ -105,7 +117,7 @@ app.post('/api/cancel/:id', (req, res) => {
     const item = db.items.find(i=>i.id===id);
     if (!item) return res.status(404).end();
     delete item.bookedBy;
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json(item);
 });
 
@@ -139,17 +151,22 @@ app.put('/api/users/:id', (req,res)=>{
     const idx = db.users.findIndex(u=>u.id===id);
     if (idx===-1) return res.status(404).end();
     db.users[idx] = {...db.users[idx], ...req.body};
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json({user: db.users[idx]});
 });
 
 app.delete('/api/users/:id', (req,res)=>{
     const id = Number(req.params.id);
     db.users = db.users.filter(u=>u.id!==id);
-    saveDB();
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
     res.json({ok:true});
 });
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+// export app for @vercel/node; start server only in local/non-serverless environments
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server listening on port ${PORT}`);
+    });
+}
+
+module.exports = app;
