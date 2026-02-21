@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сосед-обменник Выхино-Жулебино</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Yandex Maps API -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" defer></script>
+</head>
+<body>
+    <header>
+        <!-- decorative circles for modern feel -->
+        <svg class="header-deco" viewBox="0 0 200 100" preserveAspectRatio="none">
+            <circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.3)" />
+            <circle cx="150" cy="20" r="30" fill="rgba(255,255,255,0.2)" />
+        </svg>
+        <h1>Сосед-обменник<br>Клуба многодетных семей Выхино-Жулебино</h1>
+        <p>Добро пожаловать! Здесь родители могут отдавать и брать вещи бесплатно внутри района.</p>
+        <button id="toggle-instructions" style="position:absolute;top:1rem;right:1rem;">?</button>
+        <nav>
+            <button id="nav-listings">Объявления</button>
+            <button id="nav-add">Добавить</button>
+            <button id="nav-profile">Профиль</button>
+        </nav>
+    </header>
+
+    <section id="instructions" style="display:none;">
+        <h2>Как пользоваться</h2>
+        <ol>
+            <li>Перейдите в раздел «Добавить», заполните форму и отметьте место на карте.</li>
+            <li>После публикации объявление появится в списке на главной странице.</li>
+            <li>Контакт и район берутся из вашего профиля.</li>
+        </ol>
+        <p>Если вам неудобно вводить данные самостоятельно, отправьте фотографию или текст в чат клуба, и администратор занесёт объявление за вас.</p>
+    </section>
+
+    <section id="add-item" style="display:none;">
+        <h2>Добавить объявление</h2>
+        <form id="item-form">
+            <label>Название: <input type="text" name="title" required></label><br>
+            <label>Описание: <textarea name="description"></textarea></label><br>
+            <label>Категория:
+                <select name="category" id="category-select">
+                    <option value="Учебники">Учебники</option>
+                    <option value="Одежда">Одежда</option>
+                    <option value="Мебель">Мебель</option>
+                    <option value="Коляски">Коляски/велосипеды</option>
+                    <option value="Техника">Техника</option>
+                    <option value="Игрушки">Игрушки</option>
+                    <option value="Еда">Еда</option>
+                    <option value="Лекарства">Лекарства</option>
+                    <option value="Билеты">Билеты</option>
+                </select>
+            </label><br>
+            <div id="subcat-container" style="margin-left:1.5rem;"></div><br>
+            <label>Место отдачи: <input type="text" name="location" id="location-input" readonly required placeholder="Кликните на карту"></label><br>
+            <div id="map" style="width:100%;height:200px;margin-bottom:0.5rem;"></div>
+            <fieldset id="age-checkboxes">
+                <legend>Возрастные метки (выберите одну или несколько)</legend>
+                <div class="age-row">
+                    <label><input type="checkbox" name="age" value="новорожденные"> новорожденные</label>
+                    <label><input type="checkbox" name="age" value="1 год"> 1 год</label>
+                    <label><input type="checkbox" name="age" value="2 года"> 2 года</label>
+                    <label><input type="checkbox" name="age" value="3 года"> 3 года</label>
+                    <label><input type="checkbox" name="age" value="4-5"> 4-5</label>
+                    <label><input type="checkbox" name="age" value="6-7"> 6-7</label>
+                    <label><input type="checkbox" name="age" value="8-10"> 8-10</label>
+                    <label><input type="checkbox" name="age" value="11-12"> 11-12</label>
+                    <label><input type="checkbox" name="age" value="13-14"> 13-14</label>
+                    <label><input type="checkbox" name="age" value="15-16"> 15-16</label>
+                    <label><input type="checkbox" name="age" value="17-18"> 17-18</label>
+                    <label><input type="checkbox" name="age" value="4+"> 4+</label>
+                    <label><input type="checkbox" name="age" value="6+"> 6+</label>
+                    <label><input type="checkbox" name="age" value="8+"> 8+</label>
+                    <label><input type="checkbox" name="age" value="10+"> 10+</label>
+                    <label><input type="checkbox" name="age" value="12+"> 12+</label>
+                    <label><input type="checkbox" name="age" value="14+"> 14+</label>
+                    <label><input type="checkbox" name="age" value="16+"> 16+</label>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Фото / видео (до 5 файлов)</legend>
+                <input type="file" name="attachments" accept="image/*,video/*" multiple>
+            </fieldset>
+            <fieldset>
+                <legend>Цена и оплата</legend>
+                <label>Цена: <input type="text" name="price" placeholder="например, 500 руб"></label><br>
+                <label>Банк: <input type="text" name="bank" placeholder="например, Сбербанк"></label><br>
+            </fieldset>
+            <button type="submit">Добавить</button>
+        </form>
+    </section>
+
+    <section id="listings" style="display:none;">
+        <h2>Объявления</h2>
+        <button id="show-my-ads">Мои объявления</button>
+        <fieldset id="age-filter">
+            <legend>Фильтр по возрасту</legend>
+            <div class="age-row">
+                <label><input type="checkbox" name="age-filter" value="новорожденные"> новорожденные</label>
+                <label><input type="checkbox" name="age-filter" value="1 год"> 1 год</label>
+                <label><input type="checkbox" name="age-filter" value="2 года"> 2 года</label>
+                <label><input type="checkbox" name="age-filter" value="3 года"> 3 года</label>
+                <label><input type="checkbox" name="age-filter" value="4-5"> 4-5</label>
+                <label><input type="checkbox" name="age-filter" value="6-7"> 6-7</label>
+                <label><input type="checkbox" name="age-filter" value="8-10"> 8-10</label>
+                <label><input type="checkbox" name="age-filter" value="11-12"> 11-12</label>
+                <label><input type="checkbox" name="age-filter" value="13-14"> 13-14</label>
+                <label><input type="checkbox" name="age-filter" value="15-16"> 15-16</label>
+                <label><input type="checkbox" name="age-filter" value="17-18"> 17-18</label>
+                <label><input type="checkbox" name="age-filter" value="4+"> 4+</label>
+                <label><input type="checkbox" name="age-filter" value="6+"> 6+</label>
+                <label><input type="checkbox" name="age-filter" value="8+"> 8+</label>
+                <label><input type="checkbox" name="age-filter" value="10+"> 10+</label>
+                <label><input type="checkbox" name="age-filter" value="12+"> 12+</label>
+                <label><input type="checkbox" name="age-filter" value="14+"> 14+</label>
+                <label><input type="checkbox" name="age-filter" value="16+"> 16+</label>
+            </div>
+        </fieldset>
+        <div id="items-container"></div>
+    </section>
+    <!-- modal for viewing ad -->
+    <div id="ad-modal" style="display:none; position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);padding:1rem;border:1px solid var(--border);border-radius:10px;max-width:90%;max-height:90%;overflow:auto;z-index:1000;">
+        <button id="modal-close" style="position:absolute;top:0.5rem;right:0.5rem;">✖</button>
+        <div id="modal-content"></div>
+    </div>
+    <!-- confirmation modal -->
+    <div id="confirm-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);padding:1rem;border:1px solid var(--border);border-radius:10px;z-index:1100;">
+        <p id="confirm-message"></p>
+        <button id="confirm-yes">Да</button>
+        <button id="confirm-no">Нет</button>
+    </div>
+    <section id="profile" style="display:none;">
+        <h2>Профиль</h2>
+        <div id="profile-view">
+            <p>ФИО: <span id="profile-name"></span></p>
+            <p>Телефон: <span id="profile-phone"></span></p>
+            <p>Адрес: <span id="profile-address"></span></p>
+            <p>Свободное время:</p>
+            <ul id="profile-availability"></ul>
+            <button id="edit-profile-btn">Редактировать</button>
+            <button id="logout-btn">Выйти</button>
+            <button id="delete-profile-btn">Удалить аккаунт</button>
+        </div>
+        <div id="profile-edit" style="display:none;">
+            <h3>Редактирование профиля</h3>
+            <form id="profile-form">
+                <label>ФИО: <input type="text" name="name" required></label><br>
+                <label>Пароль (оставьте пустым, чтобы не менять): <input type="password" name="password"> <button type="button" class="toggle-password">👁</button></label><br>
+                <label>Адрес: <input type="text" name="address"></label><br>
+                <fieldset>
+                    <legend>Подъезд/корпус, этаж, кв/офис, коды</legend>
+                    <label>Корпус/строение: <input type="text" name="building"></label><br>
+                    <label>Этаж: <input type="text" name="floor"></label><br>
+                    <label>Кв/офис: <input type="text" name="unit"></label><br>
+                    <label>Домофон: <input type="text" name="intercom"></label><br>
+                    <label>Код калитки: <input type="text" name="gate"></label><br>
+                </fieldset>
+                <fieldset style="display:flex;gap:0.5rem;">
+                    <legend style="flex-basis:100%;">Свободное время</legend>
+                    <label>Пн: <input type="text" name="time-Пн"></label>
+                    <label>Вт: <input type="text" name="time-Вт"></label>
+                    <label>Ср: <input type="text" name="time-Ср"></label>
+                    <label>Чт: <input type="text" name="time-Чт"></label>
+                    <label>Пт: <input type="text" name="time-Пт"></label>
+                    <label>Сб: <input type="text" name="time-Сб"></label>
+                    <label>Вс: <input type="text" name="time-Вс"></label>
+                </fieldset>
+                <button type="submit">Сохранить</button>
+                <button type="button" id="cancel-profile-edit">Отмена</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- authentication/register area -->
+    <div id="remember-message" style="display:none;text-align:center;padding:1rem;background:var(--secondary);color:var(--text);border-radius:8px;margin-bottom:1rem;">Если вы уже входили на этом устройстве и оно вас запомнило, подождите 5-7 секунд, оно вас вспоминает</div>
+    <section id="auth-container">
+        <h2>Вход / регистрация</h2>
+        <div id="login-form">
+            <h3>Вход</h3>
+            <form>
+                <label>Телефон: <input type="text" name="phone" required></label><br>
+                <label>Пароль: <input type="password" name="password" required> <button type="button" class="toggle-password">👁</button></label><br>
+                <label><input type="checkbox" name="remember" id="remember-me"> Запомнить меня на этом устройстве</label><br>
+                <button type="submit">Войти</button>
+            </form>
+            <p>или <a href="#" id="show-register">зарегистрироваться</a></p>
+        </div>
+        <div id="register-form" style="display:none;">
+            <h3>Регистрация</h3>
+            <form>
+                <label>ФИО: <input type="text" name="name" required></label><br>
+                <label>Телефон: <input type="text" name="phone" required></label><br>
+                <label>Пароль: <input type="password" name="password" required> <button type="button" class="toggle-password">👁</button></label><br>
+                <label>Подтверждение пароля: <input type="password" name="password2" required> <button type="button" class="toggle-password">👁</button></label><br>
+                <label>Адрес: <input type="text" name="address" id="reg-address"></label><br>
+                <div id="reg-map" style="width:100%;height:150px;margin-bottom:0.5rem;"></div>
+                <fieldset>
+                    <legend>Подъезд/корпус, этаж, кв/офис, коды</legend>
+                    <label>Корпус/строение: <input type="text" name="building"></label><br>
+                    <label>Этаж: <input type="text" name="floor"></label><br>
+                    <label>Кв/офис: <input type="text" name="unit"></label><br>
+                    <label>Домофон: <input type="text" name="intercom"></label><br>
+                    <label>Код калитки: <input type="text" name="gate"></label><br>
+                </fieldset>
+                <fieldset>
+                    <legend>Свободное время</legend>
+                    <label>Пн: <select name="time-Пн"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                    <label>Вт: <select name="time-Вт"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                    <label>Ср: <select name="time-Ср"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                    <label>Чт: <select name="time-Чт"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                    <label>Пт: <select name="time-Пт"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                    <label>Сб: <select name="time-Сб"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                    <label>Вс: <select name="time-Вс"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
+                </fieldset>
+                <button type="submit">Зарегистрироваться</button>
+            </form>
+            <p>уже есть аккаунт? <a href="#" id="show-login">войти</a></p>
+        </div>
+    </section>
+
+    <!-- Yandex Maps constructor script (jsp) as requested -->
+    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3A632eef3c65bd34edabab3c3157539edeff05c7fb26bbe8e8062bdfe0a2237dcc&amp;width=635&amp;height=440&amp;lang=ru_RU&amp;scroll=true"></script>
+    <script src="script.js"></script>
+</body>
+</html>
