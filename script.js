@@ -170,20 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     div.appendChild(attDiv);
                 }
                 if (it.coords) {
-                    const mapDiv = document.createElement('div');
-                    mapDiv.className = 'item-map';
-                    mapDiv.style.width = '100%';
-                    mapDiv.style.height = '150px';
-                    div.appendChild(mapDiv);
-                    ymaps.ready(() => {
-                        const [lat, lon] = it.coords;
-                        const mini = new ymaps.Map(mapDiv, {
-                            center: [lat, lon],
-                            zoom: 15,
-                            controls: []
-                        });
-                        new ymaps.Placemark([lat, lon], {}, {preset: 'islands#redDotIcon'});
-                    });
+                    const pcoord = document.createElement('p');
+                    pcoord.textContent = `Координаты: ${it.coords[0].toFixed(5)}, ${it.coords[1].toFixed(5)}`;
+                    div.appendChild(pcoord);
                 }
             }
         });
@@ -330,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
             form.reset();
             document.getElementById('subcat-container').innerHTML = '';
         }
-        tryInitMap();
     }
     function showProfile() {
         navBar.style.display = '';
@@ -349,11 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const formEl = registerFormDiv.querySelector('form');
         if (formEl) {
             formEl.reset();
-            formEl._coords = null;
+            // coords now stored in geoCache via address value
         }
         const addrInp = document.getElementById('reg-address');
-        if (addrInp) addrInp.value = '';
-        initRegMap();
+        if (addrInp) addrInp.value = '';;
     }
 
     /* toggle instructions */
@@ -377,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Array.from(checks).forEach(c=>ageMarkers.push(c.value));
         }
         if (ageMarkers.length === 0) ageMarkers.push('на любой возраст');
-        const coords = form._coords || null;
+        const coords = geoCache[data.get('location')] || null;
         const files = form.querySelector('[name="attachments"]').files;
         const filePromises = [];
         for (let i = 0; i < files.length && i < 5; i++) {
@@ -456,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const time = fd.get(`time-${day}`);
             if (time) availability[day] = time;
         });
-        const regCoords = document.querySelector('#register-form form')._coords || null;
         const addressDetails = {
             building: fd.get('building'),
             floor: fd.get('floor'),
@@ -608,58 +594,51 @@ document.addEventListener('DOMContentLoaded', () => {
         showMain();
     });
 
-    /* map initialization */
-    let addMapInstance = null;
-    function initMap() {
-        if (!window.ymaps || addMapInstance) return;
-        addMapInstance = new ymaps.Map('map', {
-            center: [55.76, 37.64],
-            zoom: 10,
-            controls: ['searchControl']
-        });
-        addMapInstance.events.add('click', function (e) {
-            const coords = e.get('coords');
-            ymaps.geocode(coords).then(function (res) {
-                const first = res.geoObjects.get(0);
-                const address = first.getAddressLine();
-                const inp = document.getElementById('location-input');
-                if (inp) inp.value = address;
-                // keep coords on the form for later saving
-                const formEl = document.getElementById('item-form');
-                if (formEl) formEl._coords = coords;
-            });
-        });
-    }
-    function tryInitMap() {
-        if (window.ymaps) {
-            ymaps.ready(initMap);
+    /* геосаджест: запросим подсказки на бэке, сохраним координаты в кеш */
+    const geoCache = {};
+    async function fetchGeo(q) {
+        if (!q) return [];
+        try {
+            const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+            if (!res.ok) return [];
+            return await res.json();
+        } catch (e) {
+            console.error('geocode request failed', e);
+            return [];
         }
     }
-    // registration map instance
-    let regMapInstance = null;
-    function initRegMap() {
-        if (!window.ymaps || regMapInstance) return;
-        regMapInstance = new ymaps.Map('reg-map', {
-            center: [55.76, 37.64],
-            zoom: 10,
-            controls: ['searchControl']
-        });
-        regMapInstance.events.add('click', function(e) {
-            const coords = e.get('coords');
-            ymaps.geocode(coords).then(res => {
-                const addr = res.geoObjects.get(0).getAddressLine();
-                const inp = document.getElementById('reg-address');
-                if (inp) inp.value = addr;
-                const formEl = document.querySelector('#register-form form');
-                if (formEl) formEl._coords = coords;
+    function attachGeosuggest(inputEl) {
+        const listId = inputEl.getAttribute('list');
+        if (!listId) return;
+        const listEl = document.getElementById(listId);
+        inputEl.addEventListener('input', async () => {
+            const q = inputEl.value.trim();
+            if (q.length < 3) return;
+            const suggestions = await fetchGeo(q);
+            listEl.innerHTML = '';
+            suggestions.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.text;
+                opt.dataset.coords = s.coords.join(',');
+                listEl.appendChild(opt);
             });
         });
+        inputEl.addEventListener('change', () => {
+            const val = inputEl.value;
+            const opt = [...listEl.options].find(o => o.value === val);
+            if (opt) {
+                geoCache[val] = opt.dataset.coords.split(',').map(Number);
+            } else {
+                delete geoCache[val];
+            }
+        });
     }
-    // attempt to init maps when DOM loaded or when needed
-    tryInitMap();
     document.addEventListener('DOMContentLoaded', () => {
-        tryInitMap();
-        initRegMap();
+        // hook geosuggest to both location inputs
+        const loc = document.getElementById('location-input');
+        if (loc) attachGeosuggest(loc);
+        const reg = document.getElementById('reg-address');
+        if (reg) attachGeosuggest(reg);
         // password toggle listeners
         document.querySelectorAll('.toggle-password').forEach(btn => {
             btn.addEventListener('click', () => {

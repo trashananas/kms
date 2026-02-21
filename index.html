@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сосед-обменник Выхино-Жулебино</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Yandex Maps API -->
-    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" defer></script>
+    <!-- геосаджест: ключ берётся с бэкенда, загрузка карт больше не нужна -->
+    <!-- script tag removed -->
 </head>
 <body>
     <header>
@@ -54,8 +54,8 @@
                 </select>
             </label><br>
             <div id="subcat-container" style="margin-left:1.5rem;"></div><br>
-            <label>Место отдачи: <input type="text" name="location" id="location-input" readonly required placeholder="Кликните на карту"></label><br>
-            <div id="map" style="width:100%;height:200px;margin-bottom:0.5rem;"></div>
+            <label>Место отдачи: <input type="text" name="location" id="location-input" list="location-list" required placeholder="Начните вводить адрес"></label>
+            <datalist id="location-list"></datalist><br>
             <fieldset id="age-checkboxes">
                 <legend>Возрастные метки (выберите одну или несколько)</legend>
                 <div class="age-row">
@@ -194,8 +194,8 @@
                 <label>Телефон: <input type="text" name="phone" required></label><br>
                 <label>Пароль: <input type="password" name="password" required> <button type="button" class="toggle-password">👁</button></label><br>
                 <label>Подтверждение пароля: <input type="password" name="password2" required> <button type="button" class="toggle-password">👁</button></label><br>
-                <label>Адрес: <input type="text" name="address" id="reg-address"></label><br>
-                <div id="reg-map" style="width:100%;height:150px;margin-bottom:0.5rem;"></div>
+                <label>Адрес: <input type="text" name="address" id="reg-address" list="location-list" placeholder="Начните вводить адрес"></label><br>
+                <!-- geosuggest будет использовать тот же список, поэтому reg-map больше не нужен -->
                 <fieldset>
                     <legend>Подъезд/корпус, этаж, кв/офис, коды</legend>
                     <label>Корпус/строение: <input type="text" name="building"></label><br>
@@ -220,8 +220,6 @@
         </div>
     </section>
 
-    <!-- Yandex Maps constructor script (jsp) as requested -->
-    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3A632eef3c65bd34edabab3c3157539edeff05c7fb26bbe8e8062bdfe0a2237dcc&amp;width=635&amp;height=440&amp;lang=ru_RU&amp;scroll=true"></script>
     <script src="script.js"></script>
 </body>
 </html>

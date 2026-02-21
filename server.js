@@ -4,6 +4,8 @@ const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
+// load .env so we can read API key
+require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -105,6 +107,30 @@ app.post('/api/cancel/:id', (req, res) => {
     delete item.bookedBy;
     saveDB();
     res.json(item);
+});
+
+// geocode helper route – бэкенд прокси для хранения API‑ключа
+app.get('/api/geocode', async (req, res) => {
+    const q = req.query.q;
+    if (!q) return res.status(400).json({error:'missing query'});
+    const key = process.env.YANDEX_MAPS_API_KEY;
+    try {
+        const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${encodeURIComponent(key)}&format=json&geocode=${encodeURIComponent(q)}&results=5`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        const features = data.response?.GeoObjectCollection?.featureMember || [];
+        const out = features.map(f => {
+            const meta = f.GeoObject.metaDataProperty.GeocoderMetaData;
+            const text = meta.text;
+            const pos = f.GeoObject.Point.pos.split(' ');
+            const coords = [Number(pos[1]), Number(pos[0])];
+            return {text, coords};
+        });
+        res.json(out);
+    } catch (e) {
+        console.error('geocode error', e);
+        res.status(500).json({error:'geocode failed'});
+    }
 });
 
 // user update
