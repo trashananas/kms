@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сосед-обменник Выхино-Жулебино</title>
+    <title>Полочка — обменник для семей Выхино-Жулебино</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- геосаджест: ключ берётся с бэкенда, загрузка карт больше не нужна -->
-    <!-- script tag removed -->
 </head>
 <body>
+    <!-- Toast notifications -->
+    <div id="toast-container"></div>
+
     <header>
-        <!-- decorative liquid glass orbs -->
         <svg class="header-deco" viewBox="0 0 400 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <radialGradient id="orb1" cx="50%" cy="50%" r="50%">
@@ -30,61 +30,77 @@
             <ellipse cx="320" cy="40" rx="100" ry="70" fill="url(#orb2)"/>
             <ellipse cx="200" cy="130" rx="80" ry="60" fill="url(#orb3)"/>
         </svg>
-        <h1>Сосед-обменник<br>Клуба многодетных семей Выхино-Жулебино</h1>
-        <p>Добро пожаловать! Здесь родители могут отдавать и брать вещи бесплатно внутри района.</p>
-        <button id="toggle-instructions">?</button>
+        <h1>Полочка 📦</h1>
+        <p>Бесплатный обменник вещей Клуба многодетных семей Выхино-Жулебино.<br>Отдавай ненужное, забирай полезное — всё внутри района.</p>
+        <button id="toggle-instructions" title="Инструкция">?</button>
         <nav>
             <button id="nav-listings">Объявления</button>
-            <button id="nav-add">Добавить</button>
+            <button id="nav-add">+ Добавить</button>
             <button id="nav-profile">Профиль</button>
         </nav>
     </header>
 
+    <!-- Instructions -->
     <section id="instructions" style="display:none;">
-        <h2>Как пользоваться</h2>
-        <ol>
-            <li>Перейдите в раздел «Добавить», заполните форму и отметьте место на карте.</li>
-            <li>После публикации объявление появится в списке на главной странице.</li>
-            <li>Контакт и район берутся из вашего профиля.</li>
+        <h2>🚀 Как пользоваться Полочкой</h2>
+        <ol class="instructions-list">
+            <li>
+                <strong>Зарегистрируйтесь</strong> — один раз, по номеру телефона. Укажите имя и адрес, чтобы другие знали, где забирать вещи.
+            </li>
+            <li>
+                <strong>Добавьте объявление</strong> — нажмите «+ Добавить», выберите категорию, опишите вещь, прикрепите фото. Контактные данные подтягиваются из профиля автоматически.
+            </li>
+            <li>
+                <strong>Просматривайте объявления</strong> — листайте доску, фильтруйте по категории или возрасту. Нашли нужное? Нажмите «Бронь».
+            </li>
+            <li>
+                <strong>Режим Тикток 📱</strong> (только на мобильных) — листайте объявления вертикально, как в ленте. Ставьте ❤️ понравившимся.
+            </li>
+            <li>
+                <strong>Режим Тиндер 💘</strong> (только на мобильных) — свайпайте карточки: вправо = нравится, влево = скрыть.
+            </li>
+            <li>
+                <strong>Профиль</strong> — смотрите свои лайки, скрытые объявления, брони и свои публикации в одном месте.
+            </li>
         </ol>
-        <p>Если вам неудобно вводить данные самостоятельно, отправьте фотографию или текст в чат клуба, и администратор занесёт объявление за вас.</p>
+        <p class="instructions-note">💡 Не хотите вводить вручную? Пришлите фото или текст в чат клуба — администратор опубликует за вас.</p>
     </section>
 
+    <!-- Add/edit item -->
     <section id="add-item" style="display:none;">
         <h2>Добавить объявление</h2>
         <form id="item-form">
-            <label>Название: <input type="text" name="title" required></label><br>
-            <label>Описание: <textarea name="description"></textarea></label><br>
+            <label>Название: <input type="text" name="title" required placeholder="Например: зимний комбинезон 80 р."></label><br>
+            <label>Описание: <textarea name="description" placeholder="Состояние, особенности, причина отдачи…"></textarea></label><br>
             <label>Категория:
-                <select name="category" id="category-select">
-                    <option value="Учебники">Учебники</option>
-                    <option value="Одежда">Одежда</option>
-                    <option value="Мебель">Мебель</option>
-                    <option value="Коляски">Коляски/велосипеды</option>
-                    <option value="Техника">Техника</option>
-                    <option value="Игрушки">Игрушки</option>
-                    <option value="Еда">Еда</option>
-                    <option value="Лекарства">Лекарства</option>
-                    <option value="Билеты">Билеты</option>
-                </select>
-            </label><br>
-            <div id="subcat-container" style="margin-left:1.5rem;"></div><br>
+                <div class="category-row">
+                    <select name="category" id="category-select">
+                        <option value="">— выберите —</option>
+                    </select>
+                    <button type="button" id="add-category-btn" class="btn-secondary" title="Создать новую категорию">+ Категория</button>
+                </div>
+            </label>
+            <div id="subcat-container"></div>
+            <div id="add-subcat-container" style="display:none;">
+                <button type="button" id="add-subcat-btn" class="btn-secondary btn-sm">+ Подкатегория</button>
+            </div>
+            <br>
             <label>Место отдачи: <input type="text" name="location" id="location-input" list="location-list" required placeholder="Начните вводить адрес"></label>
             <datalist id="location-list"></datalist><br>
             <fieldset id="age-checkboxes">
-                <legend>Возрастные метки (выберите одну или несколько)</legend>
+                <legend>Возрастные метки (необязательно)</legend>
                 <div class="age-row">
-                    <label><input type="checkbox" name="age" value="новорожденные"> новорожденные</label>
+                    <label><input type="checkbox" name="age" value="новорожденные"> новорождённые</label>
                     <label><input type="checkbox" name="age" value="1 год"> 1 год</label>
                     <label><input type="checkbox" name="age" value="2 года"> 2 года</label>
                     <label><input type="checkbox" name="age" value="3 года"> 3 года</label>
-                    <label><input type="checkbox" name="age" value="4-5"> 4-5</label>
-                    <label><input type="checkbox" name="age" value="6-7"> 6-7</label>
-                    <label><input type="checkbox" name="age" value="8-10"> 8-10</label>
-                    <label><input type="checkbox" name="age" value="11-12"> 11-12</label>
-                    <label><input type="checkbox" name="age" value="13-14"> 13-14</label>
-                    <label><input type="checkbox" name="age" value="15-16"> 15-16</label>
-                    <label><input type="checkbox" name="age" value="17-18"> 17-18</label>
+                    <label><input type="checkbox" name="age" value="4-5"> 4–5</label>
+                    <label><input type="checkbox" name="age" value="6-7"> 6–7</label>
+                    <label><input type="checkbox" name="age" value="8-10"> 8–10</label>
+                    <label><input type="checkbox" name="age" value="11-12"> 11–12</label>
+                    <label><input type="checkbox" name="age" value="13-14"> 13–14</label>
+                    <label><input type="checkbox" name="age" value="15-16"> 15–16</label>
+                    <label><input type="checkbox" name="age" value="17-18"> 17–18</label>
                     <label><input type="checkbox" name="age" value="4+"> 4+</label>
                     <label><input type="checkbox" name="age" value="6+"> 6+</label>
                     <label><input type="checkbox" name="age" value="8+"> 8+</label>
@@ -99,31 +115,45 @@
                 <input type="file" name="attachments" accept="image/*,video/*" multiple>
             </fieldset>
             <fieldset>
-                <legend>Цена и оплата</legend>
-                <label>Цена: <input type="text" name="price" placeholder="например, 500 руб"></label><br>
+                <legend>Цена и оплата (если вещь платная)</legend>
+                <label>Цена: <input type="text" name="price" placeholder="например, 500 руб или Бесплатно"></label><br>
                 <label>Банк: <input type="text" name="bank" placeholder="например, Сбербанк"></label><br>
             </fieldset>
-            <button type="submit">Добавить</button>
+            <div id="form-error" class="inline-error" style="display:none;"></div>
+            <button type="submit">Опубликовать</button>
+            <button type="button" id="cancel-add-btn" class="btn-secondary" style="margin-left:0.5rem;">Отмена</button>
         </form>
     </section>
 
+    <!-- Listings -->
     <section id="listings" style="display:none;">
         <h2>Объявления</h2>
-        <button id="show-my-ads">Мои объявления</button>
+        <div class="listings-toolbar">
+            <button id="show-my-ads" class="btn-secondary">Мои объявления</button>
+            <div class="mode-btns" id="mobile-mode-btns" style="display:none;">
+                <button id="tiktok-mode-btn" class="btn-mode" title="Режим Тикток">📱 Тикток</button>
+                <button id="tinder-mode-btn" class="btn-mode" title="Режим Тиндер">💘 Тиндер</button>
+            </div>
+        </div>
+        <!-- Category filter -->
+        <div id="category-filter-row">
+            <label class="filter-label">Категория:</label>
+            <div id="category-chips"></div>
+        </div>
         <fieldset id="age-filter">
             <legend>Фильтр по возрасту</legend>
             <div class="age-row">
-                <label><input type="checkbox" name="age-filter" value="новорожденные"> новорожденные</label>
+                <label><input type="checkbox" name="age-filter" value="новорожденные"> новорождённые</label>
                 <label><input type="checkbox" name="age-filter" value="1 год"> 1 год</label>
                 <label><input type="checkbox" name="age-filter" value="2 года"> 2 года</label>
                 <label><input type="checkbox" name="age-filter" value="3 года"> 3 года</label>
-                <label><input type="checkbox" name="age-filter" value="4-5"> 4-5</label>
-                <label><input type="checkbox" name="age-filter" value="6-7"> 6-7</label>
-                <label><input type="checkbox" name="age-filter" value="8-10"> 8-10</label>
-                <label><input type="checkbox" name="age-filter" value="11-12"> 11-12</label>
-                <label><input type="checkbox" name="age-filter" value="13-14"> 13-14</label>
-                <label><input type="checkbox" name="age-filter" value="15-16"> 15-16</label>
-                <label><input type="checkbox" name="age-filter" value="17-18"> 17-18</label>
+                <label><input type="checkbox" name="age-filter" value="4-5"> 4–5</label>
+                <label><input type="checkbox" name="age-filter" value="6-7"> 6–7</label>
+                <label><input type="checkbox" name="age-filter" value="8-10"> 8–10</label>
+                <label><input type="checkbox" name="age-filter" value="11-12"> 11–12</label>
+                <label><input type="checkbox" name="age-filter" value="13-14"> 13–14</label>
+                <label><input type="checkbox" name="age-filter" value="15-16"> 15–16</label>
+                <label><input type="checkbox" name="age-filter" value="17-18"> 17–18</label>
                 <label><input type="checkbox" name="age-filter" value="4+"> 4+</label>
                 <label><input type="checkbox" name="age-filter" value="6+"> 6+</label>
                 <label><input type="checkbox" name="age-filter" value="8+"> 8+</label>
@@ -133,78 +163,145 @@
                 <label><input type="checkbox" name="age-filter" value="16+"> 16+</label>
             </div>
         </fieldset>
-        <div id="distance-filter-row" style="margin-top:0.5rem;">
-            <label>
-                <input type="checkbox" id="distance-filter-enabled">
-                Не дальше <input type="number" id="distance-km" value="2" min="0.1" max="50" step="0.1" style="width:4em"> км от моего адреса
-            </label>
-            <span id="distance-status" style="margin-left:0.5rem;font-size:0.85em;color:var(--text);"></span>
-        </div>
         <div id="items-container"></div>
     </section>
-    <!-- modal for viewing ad -->
+
+    <!-- TikTok mode overlay (mobile only) -->
+    <div id="tiktok-overlay" style="display:none;">
+        <button id="tiktok-close" class="overlay-close">✖</button>
+        <div id="tiktok-feed"></div>
+    </div>
+
+    <!-- Tinder mode overlay (mobile only) -->
+    <div id="tinder-overlay" style="display:none;">
+        <button id="tinder-close" class="overlay-close">✖</button>
+        <div id="tinder-stack"></div>
+        <div id="tinder-hint">← скрыть &nbsp;&nbsp; нравится →</div>
+        <div id="tinder-actions">
+            <button id="tinder-nope" class="tinder-btn tinder-nope">✕</button>
+            <button id="tinder-like" class="tinder-btn tinder-like">♥</button>
+        </div>
+    </div>
+
+    <!-- Ad detail modal -->
     <div id="ad-modal" class="modal" style="display:none;">
         <button id="modal-close" style="position:absolute;top:0.75rem;right:0.75rem;">✖</button>
         <div id="modal-content"></div>
     </div>
-    <!-- confirmation modal -->
+
+    <!-- Confirmation modal -->
     <div id="confirm-modal" class="modal" style="display:none;">
         <p id="confirm-message"></p>
         <button id="confirm-yes">Да</button>
         <button id="confirm-no">Нет</button>
     </div>
+
+    <!-- Custom category modal -->
+    <div id="cat-modal" class="modal" style="display:none;">
+        <h3>Новая категория</h3>
+        <label>Название категории: <input type="text" id="new-cat-name" placeholder="Например: Спорт"></label>
+        <div id="cat-modal-error" class="inline-error" style="display:none;"></div>
+        <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+            <button id="cat-modal-save">Создать</button>
+            <button id="cat-modal-cancel" class="btn-secondary">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Custom subcategory modal -->
+    <div id="subcat-modal" class="modal" style="display:none;">
+        <h3 id="subcat-modal-title">Новая подкатегория</h3>
+        <label>Название: <input type="text" id="new-subcat-name" placeholder="Например: Лыжи"></label>
+        <div id="subcat-modal-error" class="inline-error" style="display:none;"></div>
+        <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+            <button id="subcat-modal-save">Создать</button>
+            <button id="subcat-modal-cancel" class="btn-secondary">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Profile -->
     <section id="profile" style="display:none;">
         <h2>Профиль</h2>
-        <div id="profile-view">
-            <p>ФИО: <span id="profile-name"></span></p>
-            <p>Телефон: <span id="profile-phone"></span></p>
-            <p>Адрес: <span id="profile-address"></span></p>
-            <p>Свободное время:</p>
-            <ul id="profile-availability"></ul>
-            <button id="edit-profile-btn">Редактировать</button>
-            <button id="logout-btn">Выйти</button>
-            <button id="delete-profile-btn">Удалить аккаунт</button>
+        <div id="profile-tabs" class="profile-tabs">
+            <button class="tab-btn active" data-tab="profile-info">Данные</button>
+            <button class="tab-btn" data-tab="profile-my-ads">Мои объявления</button>
+            <button class="tab-btn" data-tab="profile-liked">Лайки ❤️</button>
+            <button class="tab-btn" data-tab="profile-hidden">Скрытые 🙈</button>
+            <button class="tab-btn" data-tab="profile-booked">Брони 📋</button>
         </div>
-        <div id="profile-edit" style="display:none;">
-            <h3>Редактирование профиля</h3>
-            <form id="profile-form">
-                <label>ФИО: <input type="text" name="name" required></label><br>
-                <label>Пароль (оставьте пустым, чтобы не менять): <input type="password" name="password"> <button type="button" class="toggle-password">👁</button></label><br>
-                <label>Адрес: <input type="text" name="address"></label><br>
-                <fieldset>
-                    <legend>Подъезд/корпус, этаж, кв/офис, коды</legend>
-                    <label>Корпус/строение: <input type="text" name="building"></label><br>
-                    <label>Этаж: <input type="text" name="floor"></label><br>
-                    <label>Кв/офис: <input type="text" name="unit"></label><br>
-                    <label>Домофон: <input type="text" name="intercom"></label><br>
-                    <label>Код калитки: <input type="text" name="gate"></label><br>
-                </fieldset>
-                <fieldset style="display:flex;gap:0.5rem;">
-                    <legend style="flex-basis:100%;">Свободное время</legend>
-                    <label>Пн: <input type="text" name="time-Пн"></label>
-                    <label>Вт: <input type="text" name="time-Вт"></label>
-                    <label>Ср: <input type="text" name="time-Ср"></label>
-                    <label>Чт: <input type="text" name="time-Чт"></label>
-                    <label>Пт: <input type="text" name="time-Пт"></label>
-                    <label>Сб: <input type="text" name="time-Сб"></label>
-                    <label>Вс: <input type="text" name="time-Вс"></label>
-                </fieldset>
-                <button type="submit">Сохранить</button>
-                <button type="button" id="cancel-profile-edit">Отмена</button>
-            </form>
+
+        <div id="profile-info" class="tab-content">
+            <div id="profile-view">
+                <p>ФИО: <span id="profile-name"></span></p>
+                <p>Телефон: <span id="profile-phone"></span></p>
+                <p>Адрес: <span id="profile-address"></span></p>
+                <p>Свободное время:</p>
+                <ul id="profile-availability"></ul>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;">
+                    <button id="edit-profile-btn">Редактировать</button>
+                    <button id="logout-btn" class="btn-secondary">Выйти</button>
+                    <button id="delete-profile-btn" class="btn-danger">Удалить аккаунт</button>
+                </div>
+            </div>
+            <div id="profile-edit" style="display:none;">
+                <h3>Редактирование профиля</h3>
+                <form id="profile-form">
+                    <label>ФИО: <input type="text" name="name" required></label><br>
+                    <label>Пароль (оставьте пустым, чтобы не менять): <input type="password" name="password"> <button type="button" class="toggle-password">👁</button></label><br>
+                    <label>Адрес: <input type="text" name="address"></label><br>
+                    <fieldset>
+                        <legend>Подъезд/корпус, этаж, кв/офис, коды</legend>
+                        <label>Корпус/строение: <input type="text" name="building"></label><br>
+                        <label>Этаж: <input type="text" name="floor"></label><br>
+                        <label>Кв/офис: <input type="text" name="unit"></label><br>
+                        <label>Домофон: <input type="text" name="intercom"></label><br>
+                        <label>Код калитки: <input type="text" name="gate"></label><br>
+                    </fieldset>
+                    <fieldset style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <legend style="flex-basis:100%;">Свободное время</legend>
+                        <label>Пн: <input type="text" name="time-Пн"></label>
+                        <label>Вт: <input type="text" name="time-Вт"></label>
+                        <label>Ср: <input type="text" name="time-Ср"></label>
+                        <label>Чт: <input type="text" name="time-Чт"></label>
+                        <label>Пт: <input type="text" name="time-Пт"></label>
+                        <label>Сб: <input type="text" name="time-Сб"></label>
+                        <label>Вс: <input type="text" name="time-Вс"></label>
+                    </fieldset>
+                    <div id="profile-form-error" class="inline-error" style="display:none;"></div>
+                    <button type="submit">Сохранить</button>
+                    <button type="button" id="cancel-profile-edit" class="btn-secondary" style="margin-left:0.5rem;">Отмена</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="profile-my-ads" class="tab-content" style="display:none;">
+            <div id="my-ads-container"></div>
+        </div>
+        <div id="profile-liked" class="tab-content" style="display:none;">
+            <p class="tab-hint">Объявления, которым вы поставили ❤️</p>
+            <div id="liked-container"></div>
+        </div>
+        <div id="profile-hidden" class="tab-content" style="display:none;">
+            <p class="tab-hint">Скрытые вами объявления. <button id="clear-hidden-btn" class="btn-secondary btn-sm">Сбросить все</button></p>
+            <div id="hidden-container"></div>
+        </div>
+        <div id="profile-booked" class="tab-content" style="display:none;">
+            <p class="tab-hint">Объявления, которые вы забронировали</p>
+            <div id="booked-container"></div>
         </div>
     </section>
 
-    <!-- authentication/register area -->
-    <div id="remember-message" style="display:none;">Если вы уже входили на этом устройстве и оно вас запомнило, подождите 5-7 секунд, оно вас вспоминает</div>
+    <!-- Auth -->
+    <div id="remember-message" style="display:none;">Если вы уже входили на этом устройстве — подождите несколько секунд, восстанавливаем сессию…</div>
     <section id="auth-container">
-        <h2>Вход / регистрация</h2>
+        <h2>Добро пожаловать в Полочку 📦</h2>
+        <p style="color:rgba(255,255,255,0.65);margin-bottom:1.5rem;">Войдите или зарегистрируйтесь, чтобы публиковать и забирать вещи бесплатно.</p>
         <div id="login-form">
             <h3>Вход</h3>
             <form>
-                <label>Телефон: <input type="text" name="phone" required></label><br>
+                <label>Телефон: <input type="text" name="phone" required placeholder="+7 (999) 000-00-00"></label><br>
                 <label>Пароль: <input type="password" name="password" required> <button type="button" class="toggle-password">👁</button></label><br>
                 <label><input type="checkbox" name="remember" id="remember-me"> Запомнить меня на этом устройстве</label><br>
+                <div id="login-error" class="inline-error" style="display:none;"></div>
                 <button type="submit">Войти</button>
             </form>
             <p>или <a href="#" id="show-register">зарегистрироваться</a></p>
@@ -212,8 +309,8 @@
         <div id="register-form" style="display:none;">
             <h3>Регистрация</h3>
             <form>
-                <label>ФИО: <input type="text" name="name" required></label><br>
-                <label>Телефон: <input type="text" name="phone" required></label><br>
+                <label>ФИО: <input type="text" name="name" required placeholder="Иванова Анна Петровна"></label><br>
+                <label>Телефон: <input type="text" name="phone" required placeholder="+7 (999) 000-00-00"></label><br>
                 <label>Пароль: <input type="password" name="password" required> <button type="button" class="toggle-password">👁</button></label><br>
                 <label>Подтверждение пароля: <input type="password" name="password2" required> <button type="button" class="toggle-password">👁</button></label><br>
                 <label>Адрес: <input type="text" name="address" id="reg-address" placeholder="Улица, дом"></label><br>
@@ -235,6 +332,7 @@
                     <label>Сб: <select name="time-Сб"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
                     <label>Вс: <select name="time-Вс"><option value="">не указано</option><option>утро</option><option>день</option><option>вечер</option><option>ночь</option></select></label><br>
                 </fieldset>
+                <div id="register-error" class="inline-error" style="display:none;"></div>
                 <button type="submit">Зарегистрироваться</button>
             </form>
             <p>уже есть аккаунт? <a href="#" id="show-login">войти</a></p>

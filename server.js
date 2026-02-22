@@ -18,7 +18,20 @@ app.use(express.static(__dirname)); // serve all files in project as static
 const DB_FILE = process.env.VERCEL
     ? '/tmp/db.json'
     : path.join(__dirname, 'db.json');
-let db = { users: [], items: [] };
+
+const DEFAULT_CATEGORIES = {
+    'Учебники': ['Математика','Физика','Химия','Литература'],
+    'Одежда': ['Детская','Взрослая','Спортивная'],
+    'Мебель': ['Кровати','Стулья','Столы'],
+    'Коляски': ['Детские','Велосипеды'],
+    'Техника': ['Телефоны','Компьютеры','Бытовая'],
+    'Игрушки': ['Плюшевые','Развивающие'],
+    'Еда': ['Консервы','Снэки','Молоко'],
+    'Лекарства': ['От простуды','Детские','Витамины'],
+    'Билеты': ['Концерты','Театр','Кино']
+};
+
+let db = { users: [], items: [], categories: null };
 
 function loadDB() {
     if (fs.existsSync(DB_FILE)) {
@@ -36,6 +49,7 @@ loadDB();
 // ensure arrays always exist in case db.json is corrupted, partial, or manually edited
 db.users = db.users || [];
 db.items = db.items || [];
+if (!db.categories) db.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
 
 // helpers
 function normalizePhone(p) {
@@ -51,7 +65,7 @@ app.post('/api/register', (req, res) => {
     const { name, phone, password, address, availability, addressDetails } = req.body;
     const norm = normalizePhone(phone);
     if (db.users.find(u=>normalizePhone(u.phone) === norm)) {
-        return res.status(400).json({ error: 'User exists' });
+        return res.status(400).json({ error: 'Пользователь с таким телефоном уже существует' });
     }
     const user = { id: Date.now(), name, phone: norm, password, address, availability, addressDetails };
     db.users.push(user);
@@ -69,8 +83,43 @@ app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     const norm = normalizePhone(phone);
     const user = db.users.find(u=>normalizePhone(u.phone)===norm && u.password===password);
-    if (!user) return res.status(400).json({ error:'Invalid credentials' });
+    if (!user) return res.status(400).json({ error:'Неверный телефон или пароль' });
     res.json({ user: { id: user.id, name: user.name, phone: user.phone } });
+});
+
+// categories
+app.get('/api/categories', (req, res) => {
+    res.json(db.categories);
+});
+
+app.post('/api/categories', (req, res) => {
+    const { name, subcategories } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'Название категории не может быть пустым' });
+    }
+    const trimmed = name.trim();
+    if (db.categories[trimmed]) {
+        return res.status(400).json({ error: 'Такая категория уже существует' });
+    }
+    db.categories[trimmed] = Array.isArray(subcategories) ? subcategories.map(s=>String(s).trim()).filter(Boolean) : [];
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); return res.status(500).json({error:'Ошибка сохранения'}); }
+    res.json(db.categories);
+});
+
+app.post('/api/categories/:name/subcategories', (req, res) => {
+    const cat = decodeURIComponent(req.params.name);
+    const { name } = req.body;
+    if (!db.categories[cat]) return res.status(404).json({ error: 'Категория не найдена' });
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'Название подкатегории не может быть пустым' });
+    }
+    const trimmed = name.trim();
+    if (db.categories[cat].includes(trimmed)) {
+        return res.status(400).json({ error: 'Такая подкатегория уже существует' });
+    }
+    db.categories[cat].push(trimmed);
+    try { saveDB(); } catch(e) { console.error('saveDB failed', e); return res.status(500).json({error:'Ошибка сохранения'}); }
+    res.json(db.categories);
 });
 
 // items
