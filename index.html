@@ -10,14 +10,29 @@
 </head>
 <body>
     <header>
-        <!-- decorative circles for modern feel -->
-        <svg class="header-deco" viewBox="0 0 200 100" preserveAspectRatio="none">
-            <circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.3)" />
-            <circle cx="150" cy="20" r="30" fill="rgba(255,255,255,0.2)" />
+        <!-- decorative liquid glass orbs -->
+        <svg class="header-deco" viewBox="0 0 400 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="orb1" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="orb2" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.28"/>
+                    <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="orb3" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#fb7185" stop-opacity="0.22"/>
+                    <stop offset="100%" stop-color="#f43f5e" stop-opacity="0"/>
+                </radialGradient>
+            </defs>
+            <ellipse cx="60" cy="80" rx="90" ry="80" fill="url(#orb1)"/>
+            <ellipse cx="320" cy="40" rx="100" ry="70" fill="url(#orb2)"/>
+            <ellipse cx="200" cy="130" rx="80" ry="60" fill="url(#orb3)"/>
         </svg>
         <h1>Сосед-обменник<br>Клуба многодетных семей Выхино-Жулебино</h1>
         <p>Добро пожаловать! Здесь родители могут отдавать и брать вещи бесплатно внутри района.</p>
-        <button id="toggle-instructions" style="position:absolute;top:1rem;right:1rem;">?</button>
+        <button id="toggle-instructions">?</button>
         <nav>
             <button id="nav-listings">Объявления</button>
             <button id="nav-add">Добавить</button>
@@ -128,12 +143,12 @@
         <div id="items-container"></div>
     </section>
     <!-- modal for viewing ad -->
-    <div id="ad-modal" style="display:none; position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);padding:1rem;border:1px solid var(--border);border-radius:10px;max-width:90%;max-height:90%;overflow:auto;z-index:1000;">
-        <button id="modal-close" style="position:absolute;top:0.5rem;right:0.5rem;">✖</button>
+    <div id="ad-modal" class="modal" style="display:none;">
+        <button id="modal-close" style="position:absolute;top:0.75rem;right:0.75rem;">✖</button>
         <div id="modal-content"></div>
     </div>
     <!-- confirmation modal -->
-    <div id="confirm-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);padding:1rem;border:1px solid var(--border);border-radius:10px;z-index:1100;">
+    <div id="confirm-modal" class="modal" style="display:none;">
         <p id="confirm-message"></p>
         <button id="confirm-yes">Да</button>
         <button id="confirm-no">Нет</button>
@@ -181,7 +196,7 @@
     </section>
 
     <!-- authentication/register area -->
-    <div id="remember-message" style="display:none;text-align:center;padding:1rem;background:var(--secondary);color:var(--text);border-radius:8px;margin-bottom:1rem;">Если вы уже входили на этом устройстве и оно вас запомнило, подождите 5-7 секунд, оно вас вспоминает</div>
+    <div id="remember-message" style="display:none;">Если вы уже входили на этом устройстве и оно вас запомнило, подождите 5-7 секунд, оно вас вспоминает</div>
     <section id="auth-container">
         <h2>Вход / регистрация</h2>
         <div id="login-form">
