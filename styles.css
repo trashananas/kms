@@ -468,15 +468,6 @@ button:disabled {
     border-radius: 10px;
 }
 
-/* ── Distance filter row ───────────────────────────────── */
-#distance-filter-row {
-    margin-top: 0.75rem;
-    color: rgba(255,255,255,0.78);
-    font-size: 0.88rem;
-}
-#distance-status { color: rgba(255,255,255,0.45); margin-left: 0.5rem; }
-#distance-km { width: 4.5em !important; display: inline !important; padding: 0.25rem 0.4rem !important; }
-
 /* ── Remember message ──────────────────────────────────── */
 #remember-message {
     background: rgba(124,58,237,0.14);
@@ -493,4 +484,483 @@ button:disabled {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
 ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.45); border-radius: 3px; }
+
+/* ── Toast notifications ────────────────────────────────── */
+#toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    pointer-events: none;
+}
+.toast {
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    max-width: 90vw;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    backdrop-filter: blur(16px);
+    pointer-events: none;
+}
+.toast.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-error {
+    background: rgba(239,68,68,0.88);
+    border: 1px solid rgba(255,100,100,0.3);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(239,68,68,0.35);
+}
+.toast-success {
+    background: rgba(34,197,94,0.88);
+    border: 1px solid rgba(100,255,130,0.3);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(34,197,94,0.35);
+}
+
+/* ── Inline errors ──────────────────────────────────────── */
+.inline-error {
+    color: #f87171;
+    font-size: 0.85rem;
+    margin: 0.4rem 0;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+}
+
+/* ── Instructions list ──────────────────────────────────── */
+.instructions-list {
+    padding-left: 1.25rem;
+    color: rgba(255,255,255,0.82);
+}
+.instructions-list li { margin-bottom: 0.75rem; line-height: 1.6; }
+.instructions-note {
+    color: rgba(255,255,255,0.58);
+    font-size: 0.88rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* ── Category row & chips ───────────────────────────────── */
+.category-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.category-row select { flex: 1; min-width: 0; }
+
+#category-filter-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.filter-label {
+    color: rgba(255,255,255,0.65);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding-top: 0.35rem;
+    white-space: nowrap;
+    display: block;
+    margin: 0;
+}
+#category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.cat-chip {
+    padding: 0.28rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.75);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    backdrop-filter: blur(8px);
+    box-shadow: none;
+}
+.cat-chip:hover {
+    background: rgba(124,58,237,0.28);
+    border-color: rgba(167,139,250,0.4);
+    color: #fff;
+    transform: none;
+    box-shadow: none;
+}
+.cat-chip.active {
+    background: rgba(124,58,237,0.55);
+    border-color: rgba(167,139,250,0.55);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(124,58,237,0.3);
+}
+
+/* ── Category badge ─────────────────────────────────────── */
+.cat-badge {
+    display: inline-block;
+    font-size: 0.76rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    background: rgba(124,58,237,0.25);
+    border: 1px solid rgba(167,139,250,0.3);
+    color: #c4b5fd;
+    margin: 0.2rem 0;
+}
+
+/* ── Button variants ────────────────────────────────────── */
+.btn-secondary {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.85);
+    box-shadow: none;
+}
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.18);
+    box-shadow: none;
+}
+.btn-danger {
+    background: rgba(239,68,68,0.7);
+    border-color: rgba(255,100,100,0.3);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(239,68,68,0.25);
+}
+.btn-danger:hover {
+    background: rgba(239,68,68,0.88);
+    box-shadow: 0 5px 18px rgba(239,68,68,0.4);
+}
+.btn-sm {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.82rem;
+}
+
+/* ── Listings toolbar ───────────────────────────────────── */
+.listings-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+.mode-btns { display: flex; gap: 0.4rem; }
+.btn-mode {
+    padding: 0.35rem 0.9rem;
+    font-size: 0.82rem;
+    border-radius: 50px;
+    background: rgba(56,189,248,0.18);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: #7dd3fc;
+    box-shadow: none;
+}
+.btn-mode:hover {
+    background: rgba(56,189,248,0.32);
+    box-shadow: none;
+    transform: none;
+}
+
+/* ── Item card updates ──────────────────────────────────── */
+.item-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+.item-info { flex: 1; min-width: 0; }
+.item-info h3 { margin: 0 0 0.2rem; }
+.item-thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+.like-btn {
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-size: 1.3rem;
+    padding: 0.2rem;
+    color: rgba(255,255,255,0.4);
+    transition: color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.like-btn:hover { color: #f87171; transform: scale(1.2); box-shadow: none; background: none; }
+.like-btn.liked { color: #f87171; }
+.item button { margin-right: 0.5rem; margin-top: 0.5rem; }
+.error-msg { color: #f87171; }
+.empty-msg { color: rgba(255,255,255,0.5); font-size: 0.93rem; }
+
+/* ── Profile tabs ───────────────────────────────────────── */
+.profile-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0.75rem;
+}
+.tab-btn {
+    padding: 0.38rem 0.9rem;
+    font-size: 0.84rem;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.65);
+    box-shadow: none;
+}
+.tab-btn:hover { background: rgba(255,255,255,0.14); transform: none; box-shadow: none; }
+.tab-btn.active {
+    background: rgba(124,58,237,0.5);
+    border-color: rgba(167,139,250,0.45);
+    color: #fff;
+}
+.tab-hint {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+}
+.tab-hint button { vertical-align: middle; }
+.item-mini .item-thumb { width: 56px; height: 56px; }
+
+/* ── Add-subcat btn ─────────────────────────────────────── */
+#add-subcat-container { margin: 0.5rem 0 0 0; }
+#subcat-container { margin: 0.5rem 0; }
+
+/* ── Modals for category/subcat ─────────────────────────── */
+#cat-modal, #subcat-modal {
+    width: min(440px, 95vw);
+    max-height: 80vh;
+    background: rgba(16, 10, 38, 0.92) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 18px !important;
+    color: var(--text) !important;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.65) !important;
+}
+#cat-modal input, #subcat-modal input {
+    width: 100%;
+    margin-top: 0.4rem;
+}
+
+/* ── TikTok overlay ─────────────────────────────────────── */
+#tiktok-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+}
+.overlay-close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2100;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border-color: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: none;
+}
+#tiktok-feed {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+.tiktok-card {
+    min-height: 100dvh;
+    scroll-snap-align: start;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+}
+.tiktok-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.tiktok-no-img {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    background: linear-gradient(145deg, #1a1040, #0a1628);
+}
+.tiktok-info {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 1rem 1rem 0.5rem;
+    background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, transparent 100%);
+    color: #fff;
+}
+.tiktok-info h3 { color: #fff; margin: 0 0 0.2rem; font-size: 1.1rem; }
+.tiktok-info p { margin: 0 0 0.3rem; font-size: 0.88rem; opacity: 0.85; }
+.tiktok-info small { opacity: 0.7; font-size: 0.8rem; }
+.tiktok-actions {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem 1.5rem;
+    width: 100%;
+    background: rgba(0,0,0,0.55);
+}
+.tiktok-like-btn {
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-size: 2rem;
+    color: rgba(255,255,255,0.55);
+    padding: 0;
+    transition: color 0.2s, transform 0.2s;
+}
+.tiktok-like-btn:hover, .tiktok-like-btn.liked { color: #f87171; transform: scale(1.1); box-shadow: none; background: none; }
+.tiktok-empty {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.2rem;
+}
+
+/* ── Tinder overlay ─────────────────────────────────────── */
+#tinder-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(145deg, #0d0a1e 0%, #1a1040 100%);
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3.5rem 1rem 1rem;
+}
+#tinder-stack {
+    width: min(380px, 95vw);
+    height: min(520px, 70vh);
+    position: relative;
+}
+.tinder-card {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    flex-direction: column;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    will-change: transform;
+}
+.tinder-card:active { cursor: grabbing; }
+.tinder-img {
+    width: 100%;
+    flex: 1;
+    object-fit: cover;
+}
+.tinder-no-img {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    background: linear-gradient(145deg, #1a1040, #0a1628);
+}
+.tinder-info {
+    padding: 1rem;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+}
+.tinder-info h3 { color: #fff; margin: 0 0 0.2rem; }
+.tinder-info p { margin: 0 0 0.25rem; font-size: 0.88rem; opacity: 0.82; }
+.tinder-info small { opacity: 0.65; font-size: 0.8rem; }
+.tinder-swipe-label {
+    position: absolute;
+    top: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0.3rem 1rem;
+    border-radius: 50px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.tinder-swipe-label.label-like {
+    opacity: 1;
+    background: rgba(34,197,94,0.85);
+    color: #fff;
+}
+.tinder-swipe-label.label-nope {
+    opacity: 1;
+    background: rgba(239,68,68,0.85);
+    color: #fff;
+}
+#tinder-hint {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.82rem;
+    text-align: center;
+}
+#tinder-actions {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+}
+.tinder-btn {
+    width: 3.8rem;
+    height: 3.8rem;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tinder-nope {
+    background: rgba(239,68,68,0.75);
+    border-color: rgba(255,100,100,0.3);
+    box-shadow: 0 4px 18px rgba(239,68,68,0.3);
+}
+.tinder-like {
+    background: rgba(34,197,94,0.75);
+    border-color: rgba(100,255,130,0.3);
+    box-shadow: 0 4px 18px rgba(34,197,94,0.3);
+}
+.tinder-empty {
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    font-size: 1.1rem;
+    padding: 2rem;
+}
+
 
