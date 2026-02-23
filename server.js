@@ -1,24 +1,18 @@
+
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const db = require('./firestore'); // Используем firestore
 
-// load .env so we can read API key
 require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(__dirname)); // serve all files in project as static
+app.use(express.static(__dirname));
 
-// simple JSON storage
-// On Vercel the project directory is read-only; /tmp is the only writable location
-const DB_FILE = process.env.VERCEL
-    ? '/tmp/db.json'
-    : path.join(__dirname, 'db.json');
-
+// Инициализация категорий, если их еще нет
 const DEFAULT_CATEGORIES = {
     'Учебники': ['Математика','Физика','Химия','Литература'],
     'Одежда': ['Детская','Взрослая','Спортивная'],
@@ -31,25 +25,13 @@ const DEFAULT_CATEGORIES = {
     'Билеты': ['Концерты','Театр','Кино']
 };
 
-let db = { users: [], items: [], categories: null };
-
-function loadDB() {
-    if (fs.existsSync(DB_FILE)) {
-        try {
-            db = JSON.parse(fs.readFileSync(DB_FILE));
-        } catch (e) {
-            console.error('Failed to load db', e);
-        }
+const categoriesRef = db.collection('categories').doc('all');
+categoriesRef.get().then((doc) => {
+    if (!doc.exists) {
+        categoriesRef.set(DEFAULT_CATEGORIES);
     }
-}
-function saveDB() {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-}
-loadDB();
-// ensure arrays always exist in case db.json is corrupted, partial, or manually edited
-db.users = db.users || [];
-db.items = db.items || [];
-if (!db.categories) db.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+});
+
 
 // helpers
 function normalizePhone(p) {
@@ -61,116 +43,145 @@ function normalizePhone(p) {
 }
 
 // routes
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { name, phone, password, address, availability, addressDetails } = req.body;
-    const norm = normalizePhone(phone);
-    if (db.users.find(u=>normalizePhone(u.phone) === norm)) {
-        return res.status(400).json({ error: 'Пользователь с таким телефоном уже существует' });
-    }
-    const user = { id: Date.now(), name, phone: norm, password, address, availability, addressDetails };
-    db.users.push(user);
+    const normPhone = normalizePhone(phone);
     try {
-        saveDB();
-    } catch(e) {
-        db.users.pop();
-        console.error('saveDB failed', e);
-        return res.status(500).json({ error: 'Ошибка сохранения данных' });
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('phone', '==', normPhone).get();
+        if (!snapshot.empty) {
+            return res.status(400).json({ error: 'Пользователь с таким телефоном уже существует' });
+        }
+        const userRef = await usersRef.add({ name, phone: normPhone, password, address, availability, addressDetails });
+        res.json({ user: { id: userRef.id, name, phone: normPhone } });
+    } catch (error) {
+        console.error("Error registering user: ", error);
+        res.status(500).json({ error: 'Ошибка сохранения данных' });
     }
-    res.json({ user: { id: user.id, name: user.name, phone: user.phone } });
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { phone, password } = req.body;
-    const norm = normalizePhone(phone);
-    const user = db.users.find(u=>normalizePhone(u.phone)===norm && u.password===password);
-    if (!user) return res.status(400).json({ error:'Неверный телефон или пароль' });
-    res.json({ user: { id: user.id, name: user.name, phone: user.phone } });
+    const normPhone = normalizePhone(phone);
+    try {
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('phone', '==', normPhone).where('password', '==', password).get();
+        if (snapshot.empty) {
+            return res.status(400).json({ error: 'Неверный телефон или пароль' });
+        }
+        const userDoc = snapshot.docs[0];
+        const user = { id: userDoc.id, ...userDoc.data() };
+        res.json({ user: { id: user.id, name: user.name, phone: user.phone } });
+    } catch (error) {
+        console.error("Error logging in: ", error);
+        res.status(500).json({ error: 'Ошибка входа' });
+    }
 });
 
 // categories
-app.get('/api/categories', (req, res) => {
-    res.json(db.categories);
+app.get('/api/categories', async (req, res) => {
+    try {
+        const doc = await categoriesRef.get();
+        if (!doc.exists) {
+            return res.status(404).json({ error: 'Категории не найдены' });
+        }
+        res.json(doc.data());
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка получения категорий' });
+    }
 });
 
-app.post('/api/categories', (req, res) => {
+app.post('/api/categories', async (req, res) => {
     const { name, subcategories } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
         return res.status(400).json({ error: 'Название категории не может быть пустым' });
     }
-    const trimmed = name.trim();
-    if (db.categories[trimmed]) {
-        return res.status(400).json({ error: 'Такая категория уже существует' });
+    const trimmedName = name.trim();
+    try {
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(categoriesRef);
+            if (!doc.exists) {
+                throw "Document does not exist!";
+            }
+            const data = doc.data();
+            if (data[trimmedName]) {
+                 return res.status(400).json({ error: 'Такая категория уже существует' });
+            }
+            const newCategories = { ...data, [trimmedName]: subcategories || [] };
+            transaction.set(categoriesRef, newCategories);
+            res.json(newCategories);
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка сохранения' });
     }
-    db.categories[trimmed] = Array.isArray(subcategories) ? subcategories.map(s=>String(s).trim()).filter(Boolean) : [];
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); return res.status(500).json({error:'Ошибка сохранения'}); }
-    res.json(db.categories);
-});
-
-app.post('/api/categories/:name/subcategories', (req, res) => {
-    const cat = decodeURIComponent(req.params.name);
-    const { name } = req.body;
-    if (!db.categories[cat]) return res.status(404).json({ error: 'Категория не найдена' });
-    if (!name || typeof name !== 'string' || !name.trim()) {
-        return res.status(400).json({ error: 'Название подкатегории не может быть пустым' });
-    }
-    const trimmed = name.trim();
-    if (db.categories[cat].includes(trimmed)) {
-        return res.status(400).json({ error: 'Такая подкатегория уже существует' });
-    }
-    db.categories[cat].push(trimmed);
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); return res.status(500).json({error:'Ошибка сохранения'}); }
-    res.json(db.categories);
 });
 
 // items
-app.get('/api/items', (req, res) => {
-    res.json(db.items);
+app.get('/api/items', async (req, res) => {
+    try {
+        const itemsRef = db.collection('items');
+        const snapshot = await itemsRef.orderBy('createdAt', 'desc').get();
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(items);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка получения' });
+    }
 });
 
-app.post('/api/items', (req, res) => {
-    const item = req.body;
-    item.id = Date.now();
-    db.items.unshift(item);
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json(item);
+app.post('/api/items', async (req, res) => {
+    try {
+        const newItem = { ...req.body, createdAt: new Date() };
+        const docRef = await db.collection('items').add(newItem);
+        res.json({ id: docRef.id, ...newItem });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка сохранения' });
+    }
 });
 
-app.put('/api/items/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const idx = db.items.findIndex(i=>i.id===id);
-    if (idx===-1) return res.status(404).end();
-    db.items[idx] = { ...db.items[idx], ...req.body };
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json(db.items[idx]);
+app.put('/api/items/:id', async (req, res) => {
+    try {
+        const itemId = req.params.id;
+        await db.collection('items').doc(itemId).update(req.body);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка сохранения' });
+    }
 });
 
-app.delete('/api/items/:id', (req, res) => {
-    const id = Number(req.params.id);
-    db.items = db.items.filter(i=>i.id!==id);
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json({ ok:true });
+app.delete('/api/items/:id', async (req, res) => {
+    try {
+        await db.collection('items').doc(req.params.id).delete();
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка удаления' });
+    }
 });
 
-app.post('/api/book/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const { phone } = req.body;
-    const item = db.items.find(i=>i.id===id);
-    if (!item) return res.status(404).end();
-    item.bookedBy = normalizePhone(phone);
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json(item);
+app.post('/api/book/:id', async (req, res) => {
+    try {
+        const itemId = req.params.id;
+        const { phone } = req.body;
+        const normPhone = normalizePhone(phone);
+        await db.collection('items').doc(itemId).update({ bookedBy: normPhone });
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка бронирования' });
+    }
 });
 
-app.post('/api/cancel/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const item = db.items.find(i=>i.id===id);
-    if (!item) return res.status(404).end();
-    delete item.bookedBy;
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json(item);
+app.post('/api/cancel/:id', async (req, res) => {
+    try {
+        const itemId = req.params.id;
+        const { FieldValue } = require('firebase-admin/firestore');
+        await db.collection('items').doc(itemId).update({ bookedBy: FieldValue.delete() });
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка отмены' });
+    }
 });
 
-// geocode helper route – бэкенд прокси для хранения API‑ключа
+
+// geocode helper route
 app.get('/api/geocode', async (req, res) => {
     const q = req.query.q;
     if (!q) return res.status(400).json({error:'missing query'});
@@ -195,21 +206,25 @@ app.get('/api/geocode', async (req, res) => {
 });
 
 // user update
-app.put('/api/users/:id', (req,res)=>{
-    const id = Number(req.params.id);
-    const idx = db.users.findIndex(u=>u.id===id);
-    if (idx===-1) return res.status(404).end();
-    db.users[idx] = {...db.users[idx], ...req.body};
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json({user: db.users[idx]});
+app.put('/api/users/:id', async (req,res) => {
+    try {
+        const userId = req.params.id;
+        await db.collection('users').doc(userId).update(req.body);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка обновления' });
+    }
 });
 
-app.delete('/api/users/:id', (req,res)=>{
-    const id = Number(req.params.id);
-    db.users = db.users.filter(u=>u.id!==id);
-    try { saveDB(); } catch(e) { console.error('saveDB failed', e); }
-    res.json({ok:true});
+app.delete('/api/users/:id', async (req,res) => {
+    try {
+        await db.collection('users').doc(req.params.id).delete();
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка удаления' });
+    }
 });
+
 
 // export app for @vercel/node; start server only in local/non-serverless environments
 if (!process.env.VERCEL) {
